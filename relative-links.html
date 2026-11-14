@@ -1,9 +1,11 @@
-<!DOCTYPE html>
+
+  <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Offline Games</title>
+
   <style>
     body {
       margin: 0;
@@ -67,15 +69,26 @@
       height: calc(100% - 44px);
       border: 0;
     }
+
+    #error {
+      padding: 1rem;
+      color: #ffb4b4;
+    }
   </style>
 </head>
 <body>
   <header>
     <h1>Offline Games</h1>
-    <input id="search" type="search" placeholder="Filter games…" aria-label="Filter games">
+    <input
+      id="search"
+      type="search"
+      placeholder="Filter games…"
+      aria-label="Filter games"
+    >
   </header>
 
   <main id="games"></main>
+  <p id="error" role="alert"></p>
 
   <section id="player" aria-label="Game player">
     <div id="toolbar">
@@ -86,51 +99,74 @@
   </section>
 
   <script>
-    // Paths are relative to this HTML file, which should be in the repository root.
-    let games = [];
-
-async function loadCatalog() {
-  try {
-    const response = await fetch("./catalog.json");
-    if (!response.ok) {
-      throw new Error(`Could not load catalog: ${response.status}`);
-    }
-
-    games = await response.json();
-    renderGames();
-  } catch (error) {
-    console.error(error);
-    list.textContent = "Could not load the game catalog.";
-  }
-}
-
-loadCatalog();
-
     const list = document.getElementById("games");
     const search = document.getElementById("search");
     const player = document.getElementById("player");
     const frame = document.getElementById("game-frame");
     const currentGame = document.getElementById("current-game");
+    const errorMessage = document.getElementById("error");
+
+    let games = [];
+
+    function getGamePath(game) {
+      return game.link || game.path || game.file || "";
+    }
 
     function renderGames() {
       const query = search.value.trim().toLowerCase();
       list.replaceChildren();
 
-      for (const game of games.filter(game =>
-        game.name.toLowerCase().includes(query)
-      )) {
+      const filteredGames = games.filter(game =>
+        (game.name || "").toLowerCase().includes(query)
+      );
+
+      for (const game of filteredGames) {
+        const path = getGamePath(game);
+
+        // Skip invalid catalog entries instead of creating links to "undefined".
+        if (!path || path === "undefined") continue;
+
+        const gameUrl = new URL(path, document.baseURI);
         const link = document.createElement("a");
-        link.href = game.file;
-        link.textContent = game.name;
+        link.href = gameUrl.href;
+        link.textContent = game.name || path;
 
         link.addEventListener("click", event => {
           event.preventDefault();
-          frame.src = game.file;
-          currentGame.textContent = game.name;
+          frame.src = gameUrl.href;
+          currentGame.textContent = game.name || path;
           player.style.display = "block";
         });
 
         list.appendChild(link);
+      }
+
+      if (list.childElementCount === 0 && !errorMessage.textContent) {
+        list.textContent = "No matching games found.";
+      }
+    }
+
+    async function loadCatalog() {
+      try {
+        const response = await fetch("./catalog.json");
+
+        if (!response.ok) {
+          throw new Error(`Could not load catalog: ${response.status}`);
+        }
+
+        const catalog = await response.json();
+
+        if (!Array.isArray(catalog)) {
+          throw new Error("catalog.json must contain a JSON array.");
+        }
+
+        games = catalog;
+        errorMessage.textContent = "";
+        renderGames();
+      } catch (error) {
+        console.error("Catalog loading failed:", error);
+        errorMessage.textContent =
+          "Could not load catalog.json. Check that it exists at the site root and contains valid JSON.";
       }
     }
 
@@ -140,7 +176,7 @@ loadCatalog();
     });
 
     search.addEventListener("input", renderGames);
-    renderGames();
+    loadCatalog();
   </script>
 </body>
 </html>
