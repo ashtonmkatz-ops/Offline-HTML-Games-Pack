@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Offline Games</title>
+  <style>
+    body {
+      margin: 0;
+      background: #0b1020;
+      color: white;
+      font-family: Verdana, Geneva, Tahoma, sans-serif;
+    }
+
+    header {
+      padding: 1rem;
+      background: #17132e;
+      position: sticky;
+      top: 0;
+    }
+
+    h1 { margin: 0 0 1rem; }
+
+    input, button {
+      font: inherit;
+      padding: 0.6rem;
+    }
+
+    #games {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+      padding: 1rem;
+    }
+
+    #games a {
+      padding: 1rem;
+      background: #2f275c;
+      color: white;
+      text-align: center;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+      border-radius: 8px;
+    }
+
+    #games a:hover { background: #443987; }
+
+    #player {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: white;
+    }
+
+    #toolbar {
+      height: 44px;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      padding: 0 0.5rem;
+      background: #17132e;
+    }
+
+    #game-frame {
+      display: block;
+      width: 100%;
+      height: calc(100% - 44px);
+      border: 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Offline Games</h1>
+    <input id="search" type="search" placeholder="Filter games…" aria-label="Filter games">
+  </header>
+
+  <main id="games"></main>
+
+  <section id="player" aria-label="Game player">
+    <div id="toolbar">
+      <button id="back" type="button">Back to games</button>
+      <span id="current-game"></span>
+    </div>
+    <iframe id="game-frame" title="Selected game"></iframe>
+  </section>
+
+  <script>
+    // Paths are relative to this HTML file, which should be in the repository root.
+    const games = [
+      { name: "1-on-1 Soccer", file: "offline/1-on-1-soccer.html" },
+      { name: "2048", file: "offline/2048.html" },
+      { name: "Among Us", file: "offline/among-us.html" }
+      // Add more, for example:
+      // { name: "Game title", file: "offline/game-file.html" }
+    ];
+
+    const list = document.getElementById("games");
+    const search = document.getElementById("search");
+    const player = document.getElementById("player");
+    const frame = document.getElementById("game-frame");
+    const currentGame = document.getElementById("current-game");
+
+    function renderGames() {
+      const query = search.value.trim().toLowerCase();
+      list.replaceChildren();
+
+      for (const game of games.filter(game =>
+        game.name.toLowerCase().includes(query)
+      )) {
+        const link = document.createElement("a");
+        link.href = game.file;
+        link.textContent = game.name;
+
+        link.addEventListener("click", event => {
+          event.preventDefault();
+          frame.src = game.file;
+          currentGame.textContent = game.name;
+          player.style.display = "block";
+        });
+
+        list.appendChild(link);
+      }
+    }
+
+    document.getElementById("back").addEventListener("click", () => {
+      frame.removeAttribute("src");
+      player.style.display = "none";
+    });
+
+    search.addEventListener("input", renderGames);
+    renderGames();
+  </script>
+</body>
+</html>
