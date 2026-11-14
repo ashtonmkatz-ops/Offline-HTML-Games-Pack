@@ -87,8 +87,24 @@
 
   <script>
     // Paths are relative to this HTML file, which should be in the repository root.
+    let games = [];
+
+async function loadCatalog() {
+  try {
     const response = await fetch("./catalog.json");
-const games = await response.json();
+    if (!response.ok) {
+      throw new Error(`Could not load catalog: ${response.status}`);
+    }
+
+    games = await response.json();
+    renderGames();
+  } catch (error) {
+    console.error(error);
+    list.textContent = "Could not load the game catalog.";
+  }
+}
+
+loadCatalog();
 
     const list = document.getElementById("games");
     const search = document.getElementById("search");
