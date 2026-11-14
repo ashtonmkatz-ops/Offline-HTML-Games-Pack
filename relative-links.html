@@ -87,13 +87,8 @@
 
   <script>
     // Paths are relative to this HTML file, which should be in the repository root.
-    const games = [
-      { name: "1-on-1 Soccer", file: "offline/1-on-1-soccer.html" },
-      { name: "2048", file: "offline/2048.html" },
-      { name: "Among Us", file: "offline/among-us.html" }
-      // Add more, for example:
-      // { name: "Game title", file: "offline/game-file.html" }
-    ];
+    const response = await fetch("./catalog.json");
+const games = await response.json();
 
     const list = document.getElementById("games");
     const search = document.getElementById("search");
